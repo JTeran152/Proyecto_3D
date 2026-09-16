@@ -1,0 +1,58 @@
+# =========================
+# Unity generated folders
+# =========================
+
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# =========================
+# Memory captures
+# =========================
+
+[Mm]emoryCaptures/
+
+# =========================
+# Asset metadata
+# =========================
+
+# Keep Unity .meta files!
+# *.meta
+
+# =========================
+# IDE / Editor files
+# =========================
+
+.vscode/
+.idea/
+
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+*.booproj
+
+# =========================
+# OS generated files
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Crash reports
+# =========================
+
+sysinfo.txt
+
+# =========================
+# Unity packages / generated
+# =========================
+
+/[Uu]nity[Mm]igration[Qq]u[ee]ue.log
