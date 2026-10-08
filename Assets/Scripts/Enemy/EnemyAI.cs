@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class EnemyAI : MonoBehaviour
@@ -16,9 +17,42 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float defeatDistance = 1.2f;
     [SerializeField] private DefeatUI defeatUI;
 
+    private float chaseSpeedBonus = 1f;
+
     private int currentPoint = 0;
     private bool isChasing = false;
     private bool defeatTriggered = false;
+
+    private void Start()
+    {
+        ApplyDifficulty();
+    }
+
+    private void ApplyDifficulty()
+    {
+        if (DifficultyManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "No se encontró DifficultyManager. Se usarán los valores del Inspector.",
+                this
+            );
+            return;
+        }
+
+        DifficultyManager manager = DifficultyManager.Instance;
+
+        patrolSpeed = manager.PatrolSpeed;
+        detectionRange = manager.DetectionRange;
+        loseRange = manager.LoseRange;
+        chaseSpeedBonus = manager.ChaseSpeedBonus;
+
+        Debug.Log(
+            gameObject.name + " configurado: " +
+            "Velocidad " + patrolSpeed +
+            ", detección " + detectionRange +
+            ", pérdida " + loseRange
+        );
+    }
 
     private void Update()
     {
@@ -49,19 +83,15 @@ public class EnemyAI : MonoBehaviour
             player.position
         );
 
-        // Comenzar persecución
         if (!isChasing && distanceToPlayer <= detectionRange)
         {
             isChasing = true;
-
             Debug.Log("¡Jugador detectado! El enemigo comienza la persecución.");
         }
 
-        // Dejar de perseguir
         if (isChasing && distanceToPlayer >= loseRange)
         {
             isChasing = false;
-
             Debug.Log("Jugador perdido. El enemigo vuelve a patrullar.");
         }
     }
@@ -81,9 +111,7 @@ public class EnemyAI : MonoBehaviour
             currentPoint++;
 
             if (currentPoint >= patrolPoints.Length)
-            {
                 currentPoint = 0;
-            }
 
             return;
         }
@@ -99,7 +127,7 @@ public class EnemyAI : MonoBehaviour
         Vector3 direction = player.position - transform.position;
         direction.y = 0f;
 
-        MoveTowards(direction, patrolSpeed + 1f);
+        MoveTowards(direction, patrolSpeed + chaseSpeedBonus);
     }
 
     private void CheckDefeat()
@@ -122,6 +150,13 @@ public class EnemyAI : MonoBehaviour
             {
                 defeatUI.ShowDefeat();
             }
+            else
+            {
+                Debug.LogWarning(
+                    "No hay DefeatUI asignado al enemigo.",
+                    this
+                );
+            }
         }
     }
 
@@ -130,7 +165,8 @@ public class EnemyAI : MonoBehaviour
         if (direction == Vector3.zero)
             return;
 
-        Vector3 movement = direction.normalized * speed * Time.deltaTime;
+        Vector3 movement =
+            direction.normalized * speed * Time.deltaTime;
 
         transform.position += movement;
 

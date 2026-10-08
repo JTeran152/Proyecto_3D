@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using System;
 
@@ -13,7 +14,6 @@ public class GameManager : MonoBehaviour
     public int CollectedOrbs => collectedOrbs;
     public int TotalOrbs => totalOrbs;
 
-    // Evento que avisa cuando cambia la cantidad de orbes
     public event Action OnOrbsChanged;
 
     private void Awake()
@@ -22,24 +22,37 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
         }
-        else
+        else if (Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+
+        // Obtener la cantidad de orbes según la dificultad seleccionada.
+        if (DifficultyManager.Instance != null)
+        {
+            totalOrbs = DifficultyManager.Instance.TotalOrbs;
         }
     }
 
     public void CollectOrb()
     {
+        // Evitar que el contador supere el total requerido.
+        if (collectedOrbs >= totalOrbs)
+            return;
+
         collectedOrbs++;
 
-        Debug.Log("Orbes recolectados: " + collectedOrbs + "/" + totalOrbs);
+        Debug.Log(
+            "Orbes recolectados: " +
+            collectedOrbs + "/" + totalOrbs
+        );
 
-        // Avisamos a la UI que el contador cambió
         OnOrbsChanged?.Invoke();
 
-        if (collectedOrbs >= totalOrbs)
+        if (HasCollectedAllOrbs())
         {
-            Debug.Log("¡Todos los orbes fueron recolectados!");
+            Debug.Log("¡Todos los orbes necesarios fueron recolectados!");
         }
     }
 

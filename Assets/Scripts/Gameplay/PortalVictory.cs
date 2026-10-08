@@ -31,10 +31,10 @@ public class PortalVictory : MonoBehaviour
         else
         {
             portalMessageUI.ShowMessage(
-                "El portal está bloqueado.\nNecesitas encontrar los 3 orbes."
+                "El portal está bloqueado.\nNecesitas encontrar todos los orbes."
             );
 
-            Debug.Log("El portal está bloqueado. Necesitas recolectar los 3 orbes.");
+            Debug.Log("El portal está bloqueado. Necesitas recolectar todos orbes.");
         }
     }
 
