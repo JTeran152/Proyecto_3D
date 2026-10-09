@@ -100,6 +100,9 @@ public class GameManager : MonoBehaviour
 
         ritualStarted = true;
 
+        // Detener la música de persecución y darle prioridad al ritual.
+        EnemyAI.StopChaseMusicForRitual();
+
         if (ritualMessage != null)
         {
             ritualMessage.SetActive(true);
@@ -111,10 +114,10 @@ public class GameManager : MonoBehaviour
             forestAmbienceSource.Stop();
         }
 
-        // Iniciar la música del ritual.
+        // Iniciar la música del ritual con un fundido gradual.
         if (ritualMusicSource != null)
         {
-            ritualMusicSource.Play();
+            StartCoroutine(FadeInRitualMusic());
         }
 
         // Activar la persecución de todos los enemigos.
@@ -122,6 +125,37 @@ public class GameManager : MonoBehaviour
 
         Debug.Log("¡CORRE!");
     }
+
+    
+private System.Collections.IEnumerator FadeInRitualMusic()
+{
+    if (ritualMusicSource == null)
+        yield break;
+
+    // Guardamos el volumen configurado en el Inspector.
+    float targetVolume = ritualMusicSource.volume;
+    float duration = 1.5f;
+    float elapsed = 0f;
+
+    // Comenzar en silencio.
+    ritualMusicSource.volume = 0f;
+    ritualMusicSource.Play();
+
+    while (elapsed < duration)
+    {
+        elapsed += Time.unscaledDeltaTime;
+
+        ritualMusicSource.volume = Mathf.Lerp(
+            0f,
+            targetVolume,
+            Mathf.Clamp01(elapsed / duration)
+        );
+
+        yield return null;
+    }
+
+    ritualMusicSource.volume = targetVolume;
+}
 
     public bool HasCollectedAllOrbs()
     {
