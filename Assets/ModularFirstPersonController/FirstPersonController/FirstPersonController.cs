@@ -62,6 +62,18 @@ public class FirstPersonController : MonoBehaviour
     // Internal Variables
     private bool isWalking = false;
 
+    #region Footsteps
+
+    [Header("Sonido de pisadas")]
+    public AudioSource footstepAudioSource;
+    public AudioClip footstepClip;
+    public float walkFootstepInterval = 0.45f;
+    public float sprintFootstepInterval = 0.28f;
+
+    private float footstepTimer = 0f;
+
+    #endregion
+
     #region Sprint
 
     public bool enableSprint = true;
@@ -134,6 +146,11 @@ public class FirstPersonController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+
+        if (footstepAudioSource == null)
+        {
+            footstepAudioSource = GetComponent<AudioSource>();
+        }
 
         crosshairObject = GetComponentInChildren<Image>();
 
@@ -358,6 +375,8 @@ public class FirstPersonController : MonoBehaviour
 
         CheckGround();
 
+        UpdateFootsteps();
+
         if(enableHeadBob)
         {
             HeadBob();
@@ -440,6 +459,56 @@ public class FirstPersonController : MonoBehaviour
 
         #endregion
     }
+    
+    
+
+private void UpdateFootsteps()
+{
+    bool hasMovementInput =
+        Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.1f ||
+        Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0.1f;
+
+    bool canMakeFootsteps =
+        playerCanMove &&
+        isGrounded &&
+        hasMovementInput &&
+        footstepAudioSource != null &&
+        footstepClip != null;
+
+    if (!canMakeFootsteps)
+    {
+        footstepTimer = 0f;
+
+        if (footstepAudioSource != null)
+        {
+            footstepAudioSource.Stop();
+        }
+
+        return;
+    }
+
+    footstepTimer -= Time.deltaTime;
+
+    if (footstepTimer <= 0f)
+    {
+        bool sprinting =
+            enableSprint &&
+            Input.GetKey(sprintKey) &&
+            sprintRemaining > 0f &&
+            !isSprintCooldown;
+
+        float interval = sprinting
+            ? sprintFootstepInterval
+            : walkFootstepInterval;
+
+        footstepAudioSource.PlayOneShot(
+            footstepClip,
+            0.7f
+        );
+
+        footstepTimer = interval;
+    }
+}
 
     // Sets isGrounded based on a raycast sent straigth down from the player object
     private void CheckGround()
@@ -719,6 +788,54 @@ public class FirstPersonController : MonoBehaviour
         fpc.bobSpeed = EditorGUILayout.Slider(new GUIContent("Speed", "Determines how often a bob rotation is completed."), fpc.bobSpeed, 1, 20);
         fpc.bobAmount = EditorGUILayout.Vector3Field(new GUIContent("Bob Amount", "Determines the amount the joint moves in both directions on every axes."), fpc.bobAmount);
         GUI.enabled = true;
+
+        #endregion
+        
+        
+        #region Footsteps
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        GUILayout.Label(
+            "Footstep Audio",
+            new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold,
+                fontSize = 13
+            },
+            GUILayout.ExpandWidth(true)
+        );
+
+        EditorGUILayout.Space();
+
+        fpc.footstepAudioSource = (AudioSource)EditorGUILayout.ObjectField(
+            "Footstep Audio Source",
+            fpc.footstepAudioSource,
+            typeof(AudioSource),
+            true
+        );
+
+        fpc.footstepClip = (AudioClip)EditorGUILayout.ObjectField(
+            "Footstep Clip",
+            fpc.footstepClip,
+            typeof(AudioClip),
+            false
+        );
+
+        fpc.walkFootstepInterval = EditorGUILayout.Slider(
+            "Walk Footstep Interval",
+            fpc.walkFootstepInterval,
+            0.1f,
+            1f
+        );
+
+        fpc.sprintFootstepInterval = EditorGUILayout.Slider(
+            "Sprint Footstep Interval",
+            fpc.sprintFootstepInterval,
+            0.1f,
+            0.8f
+        );
 
         #endregion
 

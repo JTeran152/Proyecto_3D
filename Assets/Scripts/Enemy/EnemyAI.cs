@@ -21,6 +21,7 @@ public class EnemyAI : MonoBehaviour
 
     private int currentPoint = 0;
     private bool isChasing = false;
+    private bool ritualChaseActive = false;
     private bool defeatTriggered = false;
 
     private void Start()
@@ -78,6 +79,13 @@ public class EnemyAI : MonoBehaviour
         if (player == null)
             return;
 
+        // Durante el ritual, la persecución no se interrumpe.
+        if (ritualChaseActive)
+        {
+            isChasing = true;
+            return;
+        }
+
         float distanceToPlayer = Vector3.Distance(
             transform.position,
             player.position
@@ -86,14 +94,35 @@ public class EnemyAI : MonoBehaviour
         if (!isChasing && distanceToPlayer <= detectionRange)
         {
             isChasing = true;
-            Debug.Log("¡Jugador detectado! El enemigo comienza la persecución.");
+
+            Debug.Log(
+                "¡Jugador detectado! El enemigo comienza la persecución."
+            );
         }
 
         if (isChasing && distanceToPlayer >= loseRange)
         {
             isChasing = false;
-            Debug.Log("Jugador perdido. El enemigo vuelve a patrullar.");
+
+            Debug.Log(
+                "Jugador perdido. El enemigo vuelve a patrullar."
+            );
         }
+    }
+
+    // Este método se llama cuando comienza el ritual.
+    public void StartRitualChase()
+    {
+        if (defeatTriggered)
+            return;
+
+        ritualChaseActive = true;
+        isChasing = true;
+
+        Debug.Log(
+            gameObject.name +
+            " comienza la persecución del ritual."
+        );
     }
 
     private void Patrol()
@@ -102,6 +131,9 @@ public class EnemyAI : MonoBehaviour
             return;
 
         Transform targetPoint = patrolPoints[currentPoint];
+
+        if (targetPoint == null)
+            return;
 
         Vector3 direction = targetPoint.position - transform.position;
         direction.y = 0f;
