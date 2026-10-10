@@ -13,6 +13,10 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float detectionRange = 10f;
     [SerializeField] private float loseRange = 15f;
 
+    [Header("Detection Optimization")]
+    [SerializeField, Min(0.02f)]
+    private float detectionInterval = 0.1f;
+
     [Header("Chase Music")]
     [SerializeField] private AudioClip detectionSound;
     [SerializeField, Range(0f, 1f)]
@@ -27,6 +31,7 @@ public class EnemyAI : MonoBehaviour
 
     private float chaseSpeedBonus = 1f;
     private int currentPoint = 0;
+    private float nextDetectionTime;
 
     private bool isChasing = false;
     private bool ritualChaseActive = false;
@@ -63,6 +68,7 @@ public class EnemyAI : MonoBehaviour
     private void Start()
     {
         ApplyDifficulty();
+        nextDetectionTime = Time.time;
     }
 
     private void ApplyDifficulty()
@@ -92,14 +98,21 @@ public class EnemyAI : MonoBehaviour
         if (defeatTriggered)
             return;
 
-        DetectPlayer();
-
+        // El movimiento y la comprobación de derrota
+        // continúan ejecutándose cada fotograma.
         if (isChasing)
             ChasePlayer();
         else
             Patrol();
 
         CheckDefeat();
+
+        // La detección se comprueba con un intervalo.
+        if (Time.time >= nextDetectionTime)
+        {
+            nextDetectionTime = Time.time + detectionInterval;
+            DetectPlayer();
+        }
     }
 
     private void DetectPlayer()
@@ -114,10 +127,15 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        float distanceToPlayer =
-            Vector3.Distance(transform.position, player.position);
+        // Comparar distancias al cuadrado evita calcular
+        // la raíz cuadrada en cada comprobación.
+        float sqrDistance =
+            (transform.position - player.position).sqrMagnitude;
 
-        if (!isChasing && distanceToPlayer <= detectionRange)
+        float sqrDetectionRange = detectionRange * detectionRange;
+        float sqrLoseRange = loseRange * loseRange;
+
+        if (!isChasing && sqrDistance <= sqrDetectionRange)
         {
             isChasing = true;
             SetChasingState(true);
@@ -126,8 +144,7 @@ public class EnemyAI : MonoBehaviour
                 "¡Jugador detectado! El enemigo comienza la persecución."
             );
         }
-
-        if (isChasing && distanceToPlayer >= loseRange)
+        else if (isChasing && sqrDistance >= sqrLoseRange)
         {
             isChasing = false;
             SetChasingState(false);
@@ -155,8 +172,6 @@ public class EnemyAI : MonoBehaviour
 
     private void UpdateChaseMusic()
     {
-        // Durante el ritual no se vuelve a iniciar
-        // la música normal de persecución.
         if (ritualMusicActive)
             return;
 
@@ -207,8 +222,6 @@ public class EnemyAI : MonoBehaviour
         if (chaseMusicSource == null)
             return;
 
-        // Si la música debe sonar y todavía está detenida,
-        // iniciarla desde volumen cero.
         if (targetVolume > 0f && !chaseMusicSource.isPlaying)
         {
             chaseMusicSource.volume = 0f;
@@ -263,11 +276,6 @@ public class EnemyAI : MonoBehaviour
         ritualChaseActive = true;
         isChasing = true;
         SetChasingState(true);
-
-        Debug.Log(
-            gameObject.name +
-            " comienza la persecución del ritual."
-        );
     }
 
     public static void StopChaseMusicForRitual()
@@ -322,10 +330,10 @@ public class EnemyAI : MonoBehaviour
         if (!isChasing || player == null)
             return;
 
-        float distanceToPlayer =
-            Vector3.Distance(transform.position, player.position);
+        float sqrDistance =
+            (transform.position - player.position).sqrMagnitude;
 
-        if (distanceToPlayer <= defeatDistance)
+        if (sqrDistance <= defeatDistance * defeatDistance)
         {
             defeatTriggered = true;
             SetChasingState(false);
